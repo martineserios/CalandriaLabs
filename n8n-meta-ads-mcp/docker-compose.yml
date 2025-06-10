@@ -1,0 +1,104 @@
+services:
+  # Caddy reverse proxy with SSL
+  # caddy:
+  #   build:
+  #     context: ./caddy
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   environment:
+  #     - DOMAIN_NAME=${DOMAIN_NAME}
+  #     - SUBDOMAIN=${SUBDOMAIN}
+  #     - N8N_HOST=${N8N_HOST}
+  #   volumes:
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   depends_on:
+  #     - n8n
+
+  # n8n with MCP support
+  n8n:
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      # Database configuration
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST}
+      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT:-5432}
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE}
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./local_files:/files
+      - /var/run/docker.sock:/var/run/docker.sock  # Add this line
+      - .:/workspace  # Add this line for working directory
+    depends_on:
+      - meta-ads-mcp
+      - postgres
+
+  # Meta Ads MCP Server
+  meta-ads-mcp:
+    build:
+      context: ./meta-ads-mcp
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - META_APP_ID=${META_APP_ID}
+      - META_ACCESS_TOKEN=${META_ACCESS_TOKEN}
+      - MCP_PORT=3001
+      - MCP_HOST=0.0.0.0
+    ports:
+      - "3001:3001"  # Expose MCP server for direct access and debugging
+    volumes:
+      - mcp_data:/root/.config/meta-ads-mcp
+    healthcheck:
+      test: ["CMD-SHELL", "/app/health-check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database (optional but recommended for production)
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_POSTGRESDB_DATABASE:-n8n}
+      - POSTGRES_USER=${DB_POSTGRESDB_USER:-n8n}
+      - POSTGRES_PASSWORD=${DB_POSTGRESDB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_POSTGRESDB_USER:-n8n}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  caddy_data:
+  caddy_config:
+  n8n_data:
+  mcp_data:
+  postgres_data:
+
+networks:
+  default:
+    name: n8n-mcp-network
