@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # Caddy reverse proxy with SSL
   caddy:
@@ -15,6 +17,8 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - n8n-network
     depends_on:
       - n8n
 
@@ -48,11 +52,15 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./local_files:/files
-      - /var/run/docker.sock:/var/run/docker.sock  # Add this line
-      - .:/workspace  # Add this line for working directory
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace
+    networks:
+      - n8n-network
     depends_on:
-      - meta-ads-mcp
-      - postgres
+      meta-ads-mcp:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   # Meta Ads MCP Server
   meta-ads-mcp:
@@ -66,9 +74,11 @@ services:
       - MCP_PORT=3001
       - MCP_HOST=0.0.0.0
     ports:
-      - "3001:3001"  # Expose MCP server for direct access and debugging
+      - "3001:3001"
     volumes:
       - mcp_data:/root/.config/meta-ads-mcp
+    networks:
+      - n8n-network
     healthcheck:
       test: ["CMD-SHELL", "/app/health-check.sh"]
       interval: 30s
@@ -76,7 +86,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # PostgreSQL Database (optional but recommended for production)
+  # PostgreSQL Database (recommended for production)
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -86,11 +96,14 @@ services:
       - POSTGRES_PASSWORD=${DB_POSTGRESDB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - n8n-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_POSTGRESDB_USER:-n8n}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
 volumes:
   caddy_data:
@@ -100,5 +113,5 @@ volumes:
   postgres_data:
 
 networks:
-  default:
-    name: n8n-mcp-network
+  n8n-network:
+    driver: bridge
