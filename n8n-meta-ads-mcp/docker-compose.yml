@@ -49,6 +49,7 @@ services:
       - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
     ports:
       - "5678:5678"
+    user: "0"  # Add this line
     volumes:
       - n8n_data:/home/node/.n8n
       - ./local_files:/files
