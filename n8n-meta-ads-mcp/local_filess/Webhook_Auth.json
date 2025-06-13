@@ -1,0 +1,171 @@
+{
+  "name": "Webhook Auth",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "AccessToken",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -20
+      ],
+      "id": "8894e174-c26f-41dc-bfa4-65b3348085af",
+      "name": "Webhook",
+      "webhookId": "acab441c-5ace-484e-b327-802c84252108"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c262143a-1967-4851-b2e1-20f5b66f2291",
+              "name": "body.accessToken",
+              "value": "={{ $json.body.accessToken }}",
+              "type": "string"
+            },
+            {
+              "id": "29c72a3d-f8fd-4484-bdd5-fe22b534900c",
+              "name": "body.timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        140,
+        -20
+      ],
+      "id": "a5c9dcb7-a3b2-4d5e-96b0-00a0cca7dd15",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v22.0/oauth/access_token",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "fb_exchange_token"
+            },
+            {
+              "name": "client_id",
+              "value": "1242577747431998"
+            },
+            {
+              "name": "client_secret",
+              "value": "90b08e515d521f9a4689b4f56612cc4c"
+            },
+            {
+              "name": "fb_exchange_token",
+              "value": "={{ $json.body.accessToken }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        -20
+      ],
+      "id": "d57d99f5-7e76-48fd-a0da-c5ba0b09a95f",
+      "name": "Extend expiration"
+    },
+    {
+      "parameters": {
+        "tableId": "Users",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "access_token",
+              "fieldValue": "={{ $json.access_token }}"
+            },
+            {
+              "fieldId": "user_name",
+              "fieldValue": "=romeo"
+            },
+            {
+              "fieldId": "user_mail",
+              "fieldValue": "rgc@asd.com"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -20
+      ],
+      "id": "c37e975d-f81c-4d06-94f3-353223b9e480",
+      "name": "Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "h0GRbu1N4WaFBnw2",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Extend expiration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extend expiration": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "800eed54-da4d-476b-80e2-02580425e3b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e5dbfe6cb4595fe4fac04236ca09275991195f5f7f1815ad4bc4b74f692cf35"
+  },
+  "id": "tx6KnUJrpWrINXfg",
+  "tags": []
+}

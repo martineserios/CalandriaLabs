@@ -1,0 +1,179 @@
+{
+  "name": "Agent Mark",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0eb68abb-9400-4ea7-8dfa-f3ca82a70ae9",
+      "name": "When chat message received",
+      "webhookId": "204ddd22-5ba6-45bb-9b7f-5c6dcf07648a"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        200,
+        220
+      ],
+      "id": "eea1aba4-8e9f-4d1f-bdca-99999e7efd16",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        220
+      ],
+      "id": "9ae528ce-e1a2-418c-88b5-7dc0e366f38a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ShgOWrGLfUU99QKl",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Para realizar acciones, necesitarás:\n\n1. Un token de acceso de Meta válido\n2. Un ID de usuario (puede ser \"me\" para el usuario actual)\n3. Permisos adecuados en la API de Marketing de Meta\n\nCuando necesites acceder a los datos, utiliza los parámetros de autenticación proporcionados. Si no están disponibles, pide al usuario que los proporcione.\n\nPara las herramientas de Meta Ads:\n- Usa \"me\" como user_id a menos que se especifique lo contrario\n- Utiliza el token de acceso proporcionado\n- Especifica los parámetros requeridos para cada endpoint",
+        "operation": "executeTool",
+        "toolName": "={{$fromAI('tool_name')}}",
+        "toolParameters": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Tool_Parameters', ``, 'json') }}"
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        720,
+        220
+      ],
+      "id": "ec59bca6-96e9-4dcc-8573-eff21885fb5b",
+      "name": "execute_mcp_tool",
+      "credentials": {
+        "mcpClientApi": {
+          "id": "gm603jTWyU1wyh3p",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        380,
+        220
+      ],
+      "id": "c059a696-45a1-4c58-871a-3f9e5f5e7120",
+      "name": "Lista tools",
+      "credentials": {
+        "mcpClientApi": {
+          "id": "gm603jTWyU1wyh3p",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a Meta Ads expert assistant. When users ask about their campaigns, accounts, or performance, use the appropriate tools to get real data.\n\nAvailable tools:\n- List tools: this tool will give you the avilable tools. \nOnly take in account the following tools that the \"List_tools\" responds: \n\n- Execute tools: you wil need to use this to execute the selected tool.\n\nWhen a user asks about campaigns, start with get_ad_accounts to get their account ID, then use get_campaigns.\n\nAlways use the actual tools to get real data. Do not provide mock or example data."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ],
+      "id": "ff6178f2-1582-4088-abcd-0937b505494b",
+      "name": "AI Agent Mark"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Mark",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Mark",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Mark",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "execute_mcp_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent Mark",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista tools": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent Mark",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b96732f8-10cd-4fff-b068-d99c2ab2fbcc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e5dbfe6cb4595fe4fac04236ca09275991195f5f7f1815ad4bc4b74f692cf35"
+  },
+  "id": "qMnYlEyKi3GtpmGe",
+  "tags": []
+}
