@@ -4,13 +4,26 @@
 }
 
 {$N8N_HOST} {
-    reverse_proxy n8n:5678
+    # Reverse proxy with WebSocket support - CRITICAL for n8n executions
+    reverse_proxy n8n:5678 {
+        # WebSocket upgrade headers - ESSENTIAL for executions view
+        header_up Upgrade {http.request.header.Upgrade}
+        header_up Connection {http.request.header.Connection}
+        
+        # Standard proxy headers
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    
     encode gzip
     
     header {
         Strict-Transport-Security max-age=31536000
         X-Content-Type-Options nosniff
-        X-Frame-Options DENY
+        # Remove X-Frame-Options DENY - n8n may need iframe support
+        # X-Frame-Options DENY
         X-XSS-Protection "1; mode=block"
         Referrer-Policy strict-origin-when-cross-origin
     }
